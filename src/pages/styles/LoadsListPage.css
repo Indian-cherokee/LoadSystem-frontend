@@ -1,0 +1,51 @@
+.loads-header-line {
+  border: 0;
+  height: 2px;
+  background-color: #fdc300;
+  margin: 20px auto 30px auto;
+  width: 200px;
+}
+
+.search-and-cart-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.cart-fixed {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cart-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 0.75rem;
+  background-color: #fdc300 !important;
+  color: #000000 !important;
+  border: 1px solid #000000;
+}
+
+.loads-cards-row {
+  margin-top: 3rem !important;
+}
+
+/* Убираем стрелочки в input type="number" */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+

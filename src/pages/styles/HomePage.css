@@ -1,0 +1,41 @@
+.homepage-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-page-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 20px 20px;
+  background: #FFFFFF;
+  min-height: calc(100vh - 56px);
+}
+
+.home-page-content {
+  max-width: 800px;
+  text-align: center;
+  color: #000000;
+  padding: 40px;
+  background: #e3e1d84c;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.home-page-content h1 {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+.home-page-content .lead {
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.home-page-content p {
+  line-height: 1.8;
+}
+
