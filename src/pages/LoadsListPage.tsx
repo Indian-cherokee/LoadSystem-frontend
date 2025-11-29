@@ -9,22 +9,29 @@ import {
   Image,
   Button,
 } from 'react-bootstrap';
+import { useSelector, useDispatch } from 'react-redux';
 import { LoadCard } from '../components/LoadCard';
 import { getLoads, getCartBadge } from '../api/loadsApi';
 import type { ILoad, ICartBadge } from '../types';
+import type { RootState } from '../store';
+import {
+  setSearchTerm,
+  setMinNormative,
+  setMaxNormative,
+  selectSearchTerm,
+  selectMinNormative,
+  selectMaxNormative,
+} from '../store/slices/filterSlice';
 import { CustomBreadcrumbs } from '../components/Breadcrumbs';
 import './styles/LoadsListPage.css';
 
 export const LoadsListPage = () => {
   const [loads, setLoads] = useState<ILoad[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [minNormative, setMinNormative] = useState<number | undefined>(
-    undefined
-  );
-  const [maxNormative, setMaxNormative] = useState<number | undefined>(
-    undefined
-  );
+  const dispatch = useDispatch();
+  const searchTerm = useSelector(selectSearchTerm);
+  const minNormative = useSelector(selectMinNormative);
+  const maxNormative = useSelector(selectMaxNormative);
   const [cartBadge, setCartBadge] = useState<ICartBadge>({
     load_session_id: null,
     loads_count: 0,
@@ -54,7 +61,7 @@ export const LoadsListPage = () => {
   };
 
   useEffect(() => {
-    fetchLoads('', undefined, undefined);
+    fetchLoads(searchTerm, minNormative, maxNormative);
     getCartBadge().then((cartData) => {
       setCartBadge(cartData);
     });
@@ -82,7 +89,7 @@ export const LoadsListPage = () => {
                 type="search"
                 placeholder="Введите название нагрузки для поиска..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => dispatch(setSearchTerm(e.target.value))}
                 className="me-2"
               />
               <Button
@@ -109,11 +116,11 @@ export const LoadsListPage = () => {
               onChange={(e) => {
                 const value = e.target.value.trim();
                 if (value === '') {
-                  setMinNormative(undefined);
+                  dispatch(setMinNormative(undefined));
                 } else {
                   const num = parseFloat(value);
                   if (!isNaN(num)) {
-                    setMinNormative(num);
+                    dispatch(setMinNormative(num));
                   }
                 }
               }}
@@ -135,11 +142,11 @@ export const LoadsListPage = () => {
               onChange={(e) => {
                 const value = e.target.value.trim();
                 if (value === '') {
-                  setMaxNormative(undefined);
+                  dispatch(setMaxNormative(undefined));
                 } else {
                   const num = parseFloat(value);
                   if (!isNaN(num)) {
-                    setMaxNormative(num);
+                    dispatch(setMaxNormative(num));
                   }
                 }
               }}

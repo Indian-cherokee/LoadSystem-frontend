@@ -39,3 +39,53 @@
   line-height: 1.8;
 }
 
+/* Адаптивность */
+@media (max-width: 768px) {
+  .home-page-container {
+    padding: 80px 15px 15px;
+  }
+
+  .home-page-content {
+    padding: 30px 20px;
+    max-width: 100%;
+  }
+
+  .home-page-content h1 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+
+  .home-page-content .lead {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .home-page-content p {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+}
+
+@media (max-width: 576px) {
+  .home-page-container {
+    padding: 60px 10px 10px;
+  }
+
+  .home-page-content {
+    padding: 20px 15px;
+  }
+
+  .home-page-content h1 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+
+  .home-page-content .lead {
+    font-size: 0.95rem;
+  }
+
+  .home-page-content p {
+    font-size: 0.85rem;
+  }
+}
+

@@ -25,3 +25,8 @@ export interface ICartBadge {
   loads_count: number;
 }
 
+export interface FilterState {
+  searchTerm: string;
+  minNormative?: number;
+  maxNormative?: number;
+}
