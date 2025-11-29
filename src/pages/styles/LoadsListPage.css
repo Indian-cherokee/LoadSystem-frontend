@@ -49,3 +49,21 @@
   appearance: textfield;
 }
 
+.all-btn {
+  background-color: #fdc300 !important;
+  color: #000000 !important;
+  border: none !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.all-btn:hover {
+  background-color: #e0af00 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+.all-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+

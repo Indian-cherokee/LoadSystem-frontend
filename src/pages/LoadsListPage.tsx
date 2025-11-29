@@ -7,6 +7,7 @@ import {
   Form,
   Badge,
   Image,
+  Button,
 } from 'react-bootstrap';
 import { LoadCard } from '../components/LoadCard';
 import { getLoads, getCartBadge } from '../api/loadsApi';
@@ -18,7 +19,6 @@ export const LoadsListPage = () => {
   const [loads, setLoads] = useState<ILoad[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [category, setCategory] = useState('');
   const [minNormative, setMinNormative] = useState<number | undefined>(
     undefined
   );
@@ -32,14 +32,13 @@ export const LoadsListPage = () => {
 
   const fetchLoads = (
     filterSearch: string,
-    filterCategory: string,
     filterMinNormative?: number,
     filterMaxNormative?: number
   ) => {
     setLoading(true);
     getLoads(
       filterSearch || undefined,
-      filterCategory || undefined,
+      undefined,
       filterMinNormative,
       filterMaxNormative
     )
@@ -55,7 +54,7 @@ export const LoadsListPage = () => {
   };
 
   useEffect(() => {
-    fetchLoads('', '', undefined, undefined);
+    fetchLoads('', undefined, undefined);
     getCartBadge().then((cartData) => {
       setCartBadge(cartData);
     });
@@ -63,7 +62,7 @@ export const LoadsListPage = () => {
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    fetchLoads(searchTerm, category, minNormative, maxNormative);
+    fetchLoads(searchTerm, minNormative, maxNormative);
   };
 
   const isCartActive =
@@ -86,27 +85,22 @@ export const LoadsListPage = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="me-2"
               />
+              <Button
+                type="submit"
+                className="all-btn"
+                variant="primary"
+                onClick={(e) => {
+                  e.preventDefault();
+                  fetchLoads(searchTerm, minNormative, maxNormative);
+                }}
+              >
+                Найти
+              </Button>
             </div>
           </Col>
         </Row>
 
         <Row className="justify-content-center mb-3">
-          <Col xs={12} md={5} lg={3}>
-            <Form.Select
-              value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                // Автоматический поиск при изменении категории
-                setTimeout(() => {
-                  fetchLoads(searchTerm, e.target.value, minNormative, maxNormative);
-                }, 0);
-              }}
-            >
-              <option value="">Все категории</option>
-              <option value="Постоянная">Постоянная</option>
-              <option value="Временная">Временная</option>
-            </Form.Select>
-          </Col>
           <Col xs={12} md={3} lg={2}>
             <Form.Control
               type="number"
@@ -126,7 +120,7 @@ export const LoadsListPage = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  fetchLoads(searchTerm, category, minNormative, maxNormative);
+                  fetchLoads(searchTerm, minNormative, maxNormative);
                 }
               }}
               step="0.1"
@@ -152,7 +146,7 @@ export const LoadsListPage = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  fetchLoads(searchTerm, category, minNormative, maxNormative);
+                  fetchLoads(searchTerm, minNormative, maxNormative);
                 }
               }}
               step="0.1"
