@@ -19,28 +19,18 @@ export const LoadsListPage = () => {
   const [loads, setLoads] = useState<ILoad[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [minNormative, setMinNormative] = useState<number | undefined>(
-    undefined
-  );
-  const [maxNormative, setMaxNormative] = useState<number | undefined>(
-    undefined
-  );
   const [cartBadge, setCartBadge] = useState<ICartBadge>({
     load_session_id: null,
     loads_count: 0,
   });
 
-  const fetchLoads = (
-    filterSearch: string,
-    filterMinNormative?: number,
-    filterMaxNormative?: number
-  ) => {
+  const fetchLoads = (filterSearch: string) => {
     setLoading(true);
     getLoads(
       filterSearch || undefined,
       undefined,
-      filterMinNormative,
-      filterMaxNormative
+      undefined,
+      undefined
     )
       .then((data) => {
         if (Array.isArray(data.items)) {
@@ -54,7 +44,7 @@ export const LoadsListPage = () => {
   };
 
   useEffect(() => {
-    fetchLoads('', undefined, undefined);
+    fetchLoads('');
     getCartBadge().then((cartData) => {
       setCartBadge(cartData);
     });
@@ -62,7 +52,7 @@ export const LoadsListPage = () => {
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    fetchLoads(searchTerm, minNormative, maxNormative);
+    fetchLoads(searchTerm);
   };
 
   const isCartActive =
@@ -91,67 +81,12 @@ export const LoadsListPage = () => {
                 variant="primary"
                 onClick={(e) => {
                   e.preventDefault();
-                  fetchLoads(searchTerm, minNormative, maxNormative);
+                  fetchLoads(searchTerm);
                 }}
               >
                 Найти
               </Button>
             </div>
-          </Col>
-        </Row>
-
-        <Row className="justify-content-center mb-3">
-          <Col xs={12} md={3} lg={2}>
-            <Form.Control
-              type="number"
-              placeholder="Мин. нормативное"
-              value={minNormative ?? ''}
-              onChange={(e) => {
-                const value = e.target.value.trim();
-                if (value === '') {
-                  setMinNormative(undefined);
-                } else {
-                  const num = parseFloat(value);
-                  if (!isNaN(num)) {
-                    setMinNormative(num);
-                  }
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  fetchLoads(searchTerm, minNormative, maxNormative);
-                }
-              }}
-              step="0.1"
-              className="no-spinner"
-            />
-          </Col>
-          <Col xs={12} md={3} lg={2}>
-            <Form.Control
-              type="number"
-              placeholder="Макс. нормативное"
-              value={maxNormative ?? ''}
-              onChange={(e) => {
-                const value = e.target.value.trim();
-                if (value === '') {
-                  setMaxNormative(undefined);
-                } else {
-                  const num = parseFloat(value);
-                  if (!isNaN(num)) {
-                    setMaxNormative(num);
-                  }
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  fetchLoads(searchTerm, minNormative, maxNormative);
-                }
-              }}
-              step="0.1"
-              className="no-spinner"
-            />
           </Col>
         </Row>
       </Form>
