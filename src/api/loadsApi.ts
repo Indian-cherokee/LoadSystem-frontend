@@ -1,7 +1,12 @@
 import type { IPaginatedLoads, ILoad, ICartBadge } from '../types';
 import { LOADS_MOCK } from './mock';
 
-const API_PREFIX = '/api';
+// Более надежное определение Tauri
+const isTauri = typeof window !== 'undefined' && !!window.__TAURI__;
+const BACKEND_IP = 'http://192.168.0.123:8080'; // Замените на IP адрес вашего сервера
+const API_PREFIX = isTauri ? `${BACKEND_IP}/api` : '/api';
+
+console.log('API Configuration:', { isTauri, API_PREFIX });
 
 // Проверка авторизации пользователя
 export const isAuthenticated = (): boolean => {
@@ -29,18 +34,40 @@ export const getLoads = async (
     ? `${API_PREFIX}/loads?${params.toString()}`
     : `${API_PREFIX}/loads`;
 
+  console.log('Fetching from URL:', url);
+
   try {
     const response = await fetch(url);
+    console.log('Response status:', response.status);
+
     if (!response.ok) {
       console.error('Backend response not OK:', response.status, response.statusText);
       throw new Error(`Backend is not available: ${response.status}`);
     }
     const data = await response.json();
-    console.log('Backend response:', data);
-    return {
-      items: data.items || [],
-      total: data.items ? data.items.length : 0,
-    };
+    console.log('Backend response data:', data);
+
+    let items: ILoad[] = [];
+    let total: number = 0;
+
+    // Обработка различных форматов ответа
+    if (Array.isArray(data)) {
+      items = data;
+      total = data.length;
+    } else if (data && Array.isArray(data.items)) {
+      items = data.items;
+      total = data.total || data.items.length;
+    } else if (data && Array.isArray(data.data)) { // Если ответ в формате { data: [...] }
+      items = data.data;
+      total = data.total || data.data.length;
+    } else {
+      console.warn('Unexpected backend response format, assuming empty array:', data);
+      items = [];
+      total = 0;
+    }
+
+    console.log('Processed items:', items);
+    return { items, total };
   } catch (error) {
     console.warn('Failed to fetch from backend, using mock data.', error);
     let filteredMockItems = LOADS_MOCK.items;
@@ -75,8 +102,11 @@ export const getLoads = async (
 
 // Получение одной нагрузки по ID
 export const getLoadById = async (id: string): Promise<ILoad | null> => {
+  const url = `${API_PREFIX}/loads/${id}`;
+  console.log('Fetching single load from URL:', url);
   try {
-    const response = await fetch(`${API_PREFIX}/loads/${id}`);
+    const response = await fetch(url);
+    console.log('Single load response status:', response.status);
     if (!response.ok) {
       throw new Error('Backend is not available');
     }
@@ -90,18 +120,21 @@ export const getLoadById = async (id: string): Promise<ILoad | null> => {
 
 // Получение корзины (всегда обращается к бэкенду)
 export const getCartBadge = async (): Promise<ICartBadge> => {
+  const url = `${API_PREFIX}/load-sessions/cart`;
+  console.log('Fetching cart from URL:', url);
   try {
     const token = localStorage.getItem('authToken');
-    
+
     const headers: HeadersInit = {};
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_PREFIX}/load-sessions/cart`, {
+    const response = await fetch(url, {
       headers,
       credentials: 'include',
     });
+    console.log('Cart response status:', response.status);
 
     if (!response.ok) {
       throw new Error('Failed to fetch cart data');
