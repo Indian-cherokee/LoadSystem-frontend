@@ -88,18 +88,19 @@ export const getLoadById = async (id: string): Promise<ILoad | null> => {
   }
 };
 
-// Получение корзины (для авторизованных пользователей)
+// Получение корзины (всегда обращается к бэкенду)
 export const getCartBadge = async (): Promise<ICartBadge> => {
   try {
     const token = localStorage.getItem('authToken');
-    if (!token) {
-      throw new Error('No auth token found');
+    
+    const headers: HeadersInit = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
     const response = await fetch(`${API_PREFIX}/load-sessions/cart`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {

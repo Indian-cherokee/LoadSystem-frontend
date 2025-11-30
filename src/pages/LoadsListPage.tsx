@@ -59,6 +59,21 @@ export const LoadsListPage = () => {
     fetchLoads(searchTerm);
   };
 
+  const handleCartClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      const cartData = await getCartBadge();
+      setCartBadge(cartData);
+      if (cartData.load_session_id) {
+        alert(
+          `Переход на страницу заявки (ID: ${cartData.load_session_id}) будет реализован.`
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching cart:', error);
+    }
+  };
+
   const isCartActive =
     cartBadge.loads_count > 0 && cartBadge.load_session_id !== null;
 
@@ -97,33 +112,18 @@ export const LoadsListPage = () => {
 
       {/* Корзина в левом нижнем углу */}
       <div className="cart-fixed">
-        {isCartActive ? (
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              alert(
-                `Переход на страницу заявки (ID: ${cartBadge.load_session_id}) будет реализован.`
-              );
-            }}
-            title="Перейти к заявке"
-          >
-            <Image
-              src="/mock_images/cart.png"
-              alt="Корзина"
-              width={32}
-            />
-          </a>
-        ) : (
-          <div style={{ cursor: 'not-allowed' }}>
-            <Image
-              src="/mock_images/cart.png"
-              alt="Корзина"
-              width={32}
-              style={{ opacity: 0.5 }}
-            />
-          </div>
-        )}
+        <div
+          onClick={handleCartClick}
+          title={isCartActive ? "Перейти к заявке" : "Корзина"}
+          style={{ cursor: 'pointer', display: 'inline-block' }}
+        >
+          <Image
+            src="/mock_images/cart.png"
+            alt="Корзина"
+            width={32}
+            style={{ opacity: isCartActive ? 1 : 0.7 }}
+          />
+        </div>
         {isCartActive && (
           <Badge pill className="cart-indicator">
             {cartBadge.loads_count}
