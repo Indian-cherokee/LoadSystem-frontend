@@ -7,6 +7,15 @@ export const HomePage = () => {
       <AppNavbar />
 
       <div className="home-page-container">
+        <video
+          className="background-video"
+          autoPlay
+          loop
+          muted
+          playsInline
+        >
+          <source src="/background.mp4" type="video/mp4" />
+        </video>
         <div className="home-page-content">
           <h1>Добро пожаловать в систему расчета нагрузок!</h1>
           <p className="lead fs-4">
