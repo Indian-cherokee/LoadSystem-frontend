@@ -1,6 +1,7 @@
 import { Row, Col, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import type { ILoad } from '../types';
+import { isAuthenticated } from '../api/loadsApi';
 import './styles/LoadCard.css';
 
 export const DefaultImage = '/mock_images/default.png';
@@ -43,9 +44,11 @@ export const LoadCard: React.FC<LoadCardProps> = ({ load }) => {
                 Подробнее
               </Button>
             </Link>
-            <Button className="all-btn" variant="primary" size="sm">
-              Добавить
-            </Button>
+            {isAuthenticated() && (
+              <Button className="all-btn" variant="primary" size="sm">
+                Добавить
+              </Button>
+            )}
           </div>
         </Col>
       </Row>

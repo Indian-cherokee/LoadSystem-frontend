@@ -3,6 +3,11 @@ import { LOADS_MOCK } from './mock';
 
 const API_PREFIX = '/api';
 
+// Проверка авторизации пользователя
+export const isAuthenticated = (): boolean => {
+  return !!localStorage.getItem('authToken');
+};
+
 // Получение списка нагрузок с фильтрацией
 export const getLoads = async (
   search?: string,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Container, Spinner, Row, Col, Button } from 'react-bootstrap';
-import { getLoadById } from '../api/loadsApi';
+import { getLoadById, isAuthenticated } from '../api/loadsApi';
 import type { ILoad } from '../types';
 import { DefaultImage } from '../components/LoadCard';
 import { CustomBreadcrumbs } from '../components/Breadcrumbs';
@@ -102,12 +102,14 @@ export const LoadDetailPage = () => {
             <p>{load.load_description}</p>
           </div>
 
-          <Button
-            className="all-btn mt-3 px-4 py-2"
-            size="lg"
-          >
-            Добавить в расчет
-          </Button>
+          {isAuthenticated() && (
+            <Button
+              className="all-btn mt-3 px-4 py-2"
+              size="lg"
+            >
+              Добавить в расчет
+            </Button>
+          )}
         </div>
       </div>
     </div>
