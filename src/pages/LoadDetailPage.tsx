@@ -11,6 +11,11 @@ export const LoadDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const [load, setLoad] = useState<ILoad | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    setIsAuthenticated(!!localStorage.getItem('authToken'));
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -102,12 +107,14 @@ export const LoadDetailPage = () => {
             <p>{load.load_description}</p>
           </div>
 
-          <Button
-            className="all-btn mt-3 px-4 py-2"
-            size="lg"
-          >
-            Добавить в расчет
-          </Button>
+          {isAuthenticated && (
+            <Button
+              className="all-btn mt-3 px-4 py-2"
+              size="lg"
+            >
+              Добавить в расчет
+            </Button>
+          )}
         </div>
       </div>
     </div>

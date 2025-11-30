@@ -10,6 +10,8 @@ interface LoadCardProps {
 }
 
 export const LoadCard: React.FC<LoadCardProps> = ({ load }) => {
+  const isAuthenticated = !!localStorage.getItem('authToken');
+
   return (
     <div className="p-4 rounded shadow-sm h-100 load-card d-flex flex-column">
       <Row className="align-items-start flex-grow-1 mb-0">
@@ -43,9 +45,11 @@ export const LoadCard: React.FC<LoadCardProps> = ({ load }) => {
                 Подробнее
               </Button>
             </Link>
-            <Button className="all-btn" variant="primary" size="sm">
-              Добавить
-            </Button>
+            {isAuthenticated && (
+              <Button className="all-btn" variant="primary" size="sm">
+                Добавить
+              </Button>
+            )}
           </div>
         </Col>
       </Row>
