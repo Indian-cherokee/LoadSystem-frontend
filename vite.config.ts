@@ -18,7 +18,23 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg}'],
+        globIgnores: ['**/background.mp4'],
+        navigateFallback: '/LoadSystem-frontend/index.html',
+        navigateFallbackDenylist: [/^\/_/, /\/[^/?]+\.[^/]+$/],
+        maximumFileSizeToCacheInBytes: 3000000,
         runtimeCaching: [
+          {
+            // Кеширование видео
+            urlPattern: /\.(mp4|webm|ogg)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'videos-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 дней
+              },
+            },
+          },
           {
             // Кеширование изображений с MinIO и других внешних источников
             urlPattern: /\.(png|jpg|jpeg|svg|gif|webp)$/i,
@@ -58,7 +74,11 @@ export default defineConfig({
         icons: [
           { src: 'logo/icons8-l-48.png', type: 'image/png', sizes: '48x48' },
           { src: 'logo/icons8-l-96.png', type: 'image/png', sizes: '96x96', purpose: 'any maskable' },
+          { src: 'logo/icons8-l-96.png', type: 'image/png', sizes: '192x192', purpose: 'any maskable' },
+          { src: 'logo/icons8-l-96.png', type: 'image/png', sizes: '512x512', purpose: 'any maskable' },
         ],
+        orientation: 'portrait',
+        prefer_related_applications: false,
       },
     }),
   ],
