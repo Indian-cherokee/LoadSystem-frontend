@@ -15,7 +15,7 @@ const MainLayout = () => (
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/LoadSystem-frontend/">
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route element={<MainLayout />}>

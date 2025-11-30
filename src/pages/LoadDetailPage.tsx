@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Container, Spinner, Row, Col, Button } from 'react-bootstrap';
+import { Container, Spinner, Button } from 'react-bootstrap';
 import { getLoadById, isAuthenticated } from '../api/loadsApi';
 import type { ILoad } from '../types';
 import { DefaultImage } from '../components/LoadCard';

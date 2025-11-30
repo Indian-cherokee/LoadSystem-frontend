@@ -13,7 +13,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { LoadCard } from '../components/LoadCard';
 import { getLoads, getCartBadge } from '../api/loadsApi';
 import type { ILoad, ICartBadge } from '../types';
-import type { RootState } from '../store';
 import {
   setSearchTerm,
   selectSearchTerm,
@@ -118,7 +117,7 @@ export const LoadsListPage = () => {
           style={{ cursor: 'pointer', display: 'inline-block' }}
         >
           <Image
-            src="/mock_images/cart.png"
+            src={`${import.meta.env.BASE_URL}mock_images/cart.png`}
             alt="Корзина"
             width={32}
             style={{ opacity: isCartActive ? 1 : 0.7 }}

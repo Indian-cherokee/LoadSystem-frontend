@@ -4,7 +4,7 @@ import type { ILoad } from '../types';
 import { isAuthenticated } from '../api/loadsApi';
 import './styles/LoadCard.css';
 
-export const DefaultImage = '/mock_images/default.png';
+export const DefaultImage = `${import.meta.env.BASE_URL}mock_images/default.png`;
 
 interface LoadCardProps {
   load: ILoad;

@@ -14,7 +14,7 @@ export const HomePage = () => {
           muted
           playsInline
         >
-          <source src="/background.mp4" type="video/mp4" />
+          <source src={`${import.meta.env.BASE_URL}background.mp4`} type="video/mp4" />
         </video>
         <div className="home-page-content">
           <h1>Добро пожаловать в систему расчета нагрузок!</h1>

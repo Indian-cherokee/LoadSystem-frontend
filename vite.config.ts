@@ -5,7 +5,7 @@ import mkcert from 'vite-plugin-mkcert'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/',
+  base: '/LoadSystem-frontend/',
   plugins: [
     react(),
     mkcert({
@@ -52,7 +52,8 @@ export default defineConfig({
         description: 'Система расчета нагрузок на строительные конструкции',
         theme_color: '#fdc300',
         background_color: '#FFFFFF',
-        start_url: '/',
+        start_url: '/LoadSystem-frontend/',
+        scope: '/LoadSystem-frontend/',
         display: 'standalone',
         icons: [
           { src: 'logo/icons8-l-48.png', type: 'image/png', sizes: '48x48' },
@@ -63,7 +64,6 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    https: true,
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
