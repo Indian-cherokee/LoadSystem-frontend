@@ -16,11 +16,7 @@ import type { ILoad, ICartBadge } from '../types';
 import type { RootState } from '../store';
 import {
   setSearchTerm,
-  setMinNormative,
-  setMaxNormative,
   selectSearchTerm,
-  selectMinNormative,
-  selectMaxNormative,
 } from '../store/slices/filterSlice';
 import { CustomBreadcrumbs } from '../components/Breadcrumbs';
 import './styles/LoadsListPage.css';
@@ -30,24 +26,15 @@ export const LoadsListPage = () => {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const searchTerm = useSelector(selectSearchTerm);
-  const minNormative = useSelector(selectMinNormative);
-  const maxNormative = useSelector(selectMaxNormative);
   const [cartBadge, setCartBadge] = useState<ICartBadge>({
     load_session_id: null,
     loads_count: 0,
   });
 
-  const fetchLoads = (
-    filterSearch: string,
-    filterMinNormative?: number,
-    filterMaxNormative?: number
-  ) => {
+  const fetchLoads = (filterSearch: string) => {
     setLoading(true);
     getLoads(
-      filterSearch || undefined,
-      undefined,
-      filterMinNormative,
-      filterMaxNormative
+      filterSearch || undefined
     )
       .then((data) => {
         if (Array.isArray(data.items)) {
@@ -61,7 +48,7 @@ export const LoadsListPage = () => {
   };
 
   useEffect(() => {
-    fetchLoads(searchTerm, minNormative, maxNormative);
+    fetchLoads(searchTerm);
     getCartBadge().then((cartData) => {
       setCartBadge(cartData);
     });
@@ -69,7 +56,7 @@ export const LoadsListPage = () => {
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    fetchLoads(searchTerm, minNormative, maxNormative);
+    fetchLoads(searchTerm);
   };
 
   const isCartActive =
@@ -98,67 +85,12 @@ export const LoadsListPage = () => {
                 variant="primary"
                 onClick={(e) => {
                   e.preventDefault();
-                  fetchLoads(searchTerm, minNormative, maxNormative);
+                  fetchLoads(searchTerm);
                 }}
               >
                 Найти
               </Button>
             </div>
-          </Col>
-        </Row>
-
-        <Row className="justify-content-center mb-3">
-          <Col xs={12} md={3} lg={2}>
-            <Form.Control
-              type="number"
-              placeholder="Мин. нормативное"
-              value={minNormative ?? ''}
-              onChange={(e) => {
-                const value = e.target.value.trim();
-                if (value === '') {
-                  dispatch(setMinNormative(undefined));
-                } else {
-                  const num = parseFloat(value);
-                  if (!isNaN(num)) {
-                    dispatch(setMinNormative(num));
-                  }
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  fetchLoads(searchTerm, minNormative, maxNormative);
-                }
-              }}
-              step="0.1"
-              className="no-spinner"
-            />
-          </Col>
-          <Col xs={12} md={3} lg={2}>
-            <Form.Control
-              type="number"
-              placeholder="Макс. нормативное"
-              value={maxNormative ?? ''}
-              onChange={(e) => {
-                const value = e.target.value.trim();
-                if (value === '') {
-                  dispatch(setMaxNormative(undefined));
-                } else {
-                  const num = parseFloat(value);
-                  if (!isNaN(num)) {
-                    dispatch(setMaxNormative(num));
-                  }
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  fetchLoads(searchTerm, minNormative, maxNormative);
-                }
-              }}
-              step="0.1"
-              className="no-spinner"
-            />
           </Col>
         </Row>
       </Form>
