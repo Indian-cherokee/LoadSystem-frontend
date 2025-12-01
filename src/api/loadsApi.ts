@@ -1,12 +1,25 @@
 import type { IPaginatedLoads, ILoad, ICartBadge } from '../types';
 import { LOADS_MOCK } from './mock';
+import { getBackendIP } from '../utils/backendConfig';
 
 // Более надежное определение Tauri
-const isTauri = typeof window !== 'undefined' && !!window.__TAURI__;
-const BACKEND_IP = 'http://192.168.0.123:8080'; // Замените на IP адрес вашего сервера
-const API_PREFIX = isTauri ? `${BACKEND_IP}/api` : '/api';
+const isTauri = typeof window !== 'undefined' && !!(window as any).__TAURI__;
 
-console.log('API Configuration:', { isTauri, API_PREFIX });
+// Получаем IP адрес бэкенда из localStorage или используем значение по умолчанию
+const getAPI_PREFIX = () => {
+  if (isTauri) {
+    const backendIP = getBackendIP();
+    return `${backendIP}/api`;
+  }
+  return '/api';
+};
+
+// Функция для получения текущего API префикса
+const getCurrentAPIPrefix = () => {
+  const prefix = getAPI_PREFIX();
+  console.log('API Configuration:', { isTauri, API_PREFIX: prefix, backendIP: isTauri ? getBackendIP() : 'proxy' });
+  return prefix;
+};
 
 // Проверка авторизации пользователя
 export const isAuthenticated = (): boolean => {
@@ -30,6 +43,7 @@ export const getLoads = async (
     params.append('max_normative', maxNormative.toString());
   }
 
+  const API_PREFIX = getCurrentAPIPrefix();
   const url = params.toString()
     ? `${API_PREFIX}/loads?${params.toString()}`
     : `${API_PREFIX}/loads`;
@@ -102,6 +116,7 @@ export const getLoads = async (
 
 // Получение одной нагрузки по ID
 export const getLoadById = async (id: string): Promise<ILoad | null> => {
+  const API_PREFIX = getCurrentAPIPrefix();
   const url = `${API_PREFIX}/loads/${id}`;
   console.log('Fetching single load from URL:', url);
   try {
@@ -120,6 +135,7 @@ export const getLoadById = async (id: string): Promise<ILoad | null> => {
 
 // Получение корзины (всегда обращается к бэкенду)
 export const getCartBadge = async (): Promise<ICartBadge> => {
+  const API_PREFIX = getCurrentAPIPrefix();
   const url = `${API_PREFIX}/load-sessions/cart`;
   console.log('Fetching cart from URL:', url);
   try {
