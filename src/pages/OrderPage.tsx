@@ -18,10 +18,6 @@ import { LoadCard } from '../components/LoadCard';
 
 export const DefaultImage = '/mock_images/default.png';
 
-const STATUS_DRAFT = 1;
-const STATUS_COMPLETED = 4;
-const STATUS_REJECTED = 5;
-
 export const OrderPage = () => {
   const { id } = useParams<{ id: string }>();
   const dispatch = useDispatch<AppDispatch>();

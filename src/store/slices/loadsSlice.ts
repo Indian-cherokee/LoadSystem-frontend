@@ -17,7 +17,6 @@ const initialState: LoadsState = {
   total: 0,
 };
 
-// Получение списка нагрузок
 export const getLoadsList = createAsyncThunk(
   'loads/getLoadsList',
   async (params: { search?: string; category?: string; minNormative?: number; maxNormative?: number } = {}, { rejectWithValue }) => {

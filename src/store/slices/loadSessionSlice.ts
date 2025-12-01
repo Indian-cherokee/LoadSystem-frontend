@@ -38,7 +38,6 @@ export const fetchCartBadge = createAsyncThunk(
       console.log('Fetching cart badge...');
       const response = await api.loadSessions.cartList();
       console.log('Cart badge response:', response.data);
-      // Сохраняем ответ от бэкенда как есть (может быть -1 для пустой корзины)
       return {
         load_session_id: response.data.load_session_id ?? null,
         loads_count: response.data.loads_count ?? 0,
@@ -84,14 +83,12 @@ export const fetchLoadSessionById = createAsyncThunk(
   }
 );
 
-// Добавление нагрузки в черновик заявки
 export const addLoadToSession = createAsyncThunk(
   'loadSession/addLoad',
   async (loadId: number, { dispatch, rejectWithValue }) => {
     try {
       await api.loadSessions.draftLoadsCreate(loadId);
       
-      // Обновляем бейджик после добавления
       dispatch(fetchCartBadge());
       return { success: true };
     } catch (error: any) {
