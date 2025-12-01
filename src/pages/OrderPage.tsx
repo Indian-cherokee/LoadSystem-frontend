@@ -119,6 +119,30 @@ export const OrderPage = () => {
     }
   };
 
+  const handleSaveRoomType = async () => {
+    if (session_id && isDraft) {
+      try {
+        await dispatch(saveLoadSession({ sessionId: session_id, data: { room_type: localRoomType } })).unwrap();
+      } catch (err) {
+        dispatch(setError('Ошибка при сохранении типа помещения'));
+      }
+    }
+  };
+
+  const handleSaveOrder = async () => {
+    if (session_id) {
+      try {
+        // Сохраняем заявку - устанавливаем room_type (даже если пустой) чтобы заявка появилась в списке
+        // Если room_type был NULL, устанавливаем его (даже пустую строку), чтобы отметить заявку как сохраненную
+        const roomTypeToSave = localRoomType || '';
+        await dispatch(saveLoadSession({ sessionId: session_id, data: { room_type: roomTypeToSave } })).unwrap();
+        navigate('/loads');
+      } catch (err) {
+        dispatch(setError('Ошибка при сохранении заявки'));
+      }
+    }
+  };
+
   const handleSubmit = async () => {
     if (session_id) {
       try {
@@ -155,13 +179,22 @@ export const OrderPage = () => {
         <Card.Body>
           <Form.Label className="fw-bold mb-2">Тип помещения:</Form.Label>
           {isDraft ? (
-            <Form.Control
-              type="text"
-              value={localRoomType}
-              onChange={(e) => setLocalRoomType(e.target.value)}
-              onBlur={handleRoomTypeBlur}
-              placeholder="Введите тип помещения"
-            />
+            <Row className="g-2">
+              <Col>
+                <Form.Control
+                  type="text"
+                  value={localRoomType}
+                  onChange={(e) => setLocalRoomType(e.target.value)}
+                  onBlur={handleRoomTypeBlur}
+                  placeholder="Введите тип помещения"
+                />
+              </Col>
+              <Col xs="auto">
+                <Button variant="outline-primary" onClick={handleSaveRoomType}>
+                  Сохранить
+                </Button>
+              </Col>
+            </Row>
           ) : (
             <p className="text-muted mb-0">{room_type || 'Не указан'}</p>
           )}
@@ -268,7 +301,14 @@ export const OrderPage = () => {
               Удалить заявку
             </Button>
           </Col>
-          <Col className="text-end">
+          <Col className="text-end d-flex gap-2 justify-content-end">
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={handleSaveOrder}
+            >
+              Сохранить заявку
+            </Button>
             <Button
               variant="success"
               size="lg"
