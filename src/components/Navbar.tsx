@@ -1,7 +1,23 @@
-import { Navbar, Container, Nav } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Navbar, Container, Nav, Button } from 'react-bootstrap';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { logoutUser } from '../store/slices/userSlice';
+import { getLoadsList } from '../store/slices/loadsSlice';
+import { setSearchTerm } from '../store/slices/filterSlice';
+import type { RootState, AppDispatch } from '../store';
 
 export const AppNavbar = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.user);
+
+  const handleLogout = async () => {
+    await dispatch(logoutUser());
+    dispatch(setSearchTerm(''));
+    dispatch(getLoadsList({ search: '' }));
+    navigate('/loads');
+  };
+
   return (
     <Navbar 
       fixed="top" 
@@ -25,7 +41,7 @@ export const AppNavbar = () => {
         >
           Система расчета нагрузок
         </Navbar.Brand>
-        <Nav className="ms-auto">
+        <Nav className="ms-auto align-items-center gap-3">
           <Nav.Link 
             className="fs-5" 
             as={Link} 
@@ -34,6 +50,43 @@ export const AppNavbar = () => {
           >
             Нагрузки
           </Nav.Link>
+          {isAuthenticated && (
+            <>
+              <Nav.Link 
+                className="fs-5" 
+                as={Link} 
+                to="/orders"
+                style={{ color: '#000000' }}
+              >
+                Заявки
+              </Nav.Link>
+              <Nav.Link 
+                className="fs-5" 
+                as={Link} 
+                to="/profile"
+                style={{ color: '#000000' }}
+              >
+                {user?.full_name || user?.username || 'Профиль'}
+              </Nav.Link>
+              <Button
+                variant="outline-warning"
+                onClick={handleLogout}
+                style={{ borderColor: '#fdc300', color: '#000' }}
+              >
+                Выйти
+              </Button>
+            </>
+          )}
+          {!isAuthenticated && (
+            <Link to="/login">
+              <Button
+                variant="warning"
+                style={{ backgroundColor: '#fdc300', borderColor: '#fdc300', color: '#000' }}
+              >
+                Войти
+              </Button>
+            </Link>
+          )}
         </Nav>
       </Container>
     </Navbar>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import {
   Container,
   Row,
@@ -10,72 +10,61 @@ import {
   Button,
 } from 'react-bootstrap';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { LoadCard } from '../components/LoadCard';
-import { getLoads, getCartBadge } from '../api/loadsApi';
-import type { ILoad, ICartBadge } from '../types';
-import type { RootState } from '../store';
+import type { RootState, AppDispatch } from '../store';
 import {
   setSearchTerm,
   selectSearchTerm,
 } from '../store/slices/filterSlice';
+import { getLoadsList } from '../store/slices/loadsSlice';
+import { fetchCartBadge } from '../store/slices/loadSessionSlice';
 import { CustomBreadcrumbs } from '../components/Breadcrumbs';
 import './styles/LoadsListPage.css';
 
 export const LoadsListPage = () => {
-  const [loads, setLoads] = useState<ILoad[]>([]);
-  const [loading, setLoading] = useState(true);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const searchTerm = useSelector(selectSearchTerm);
-  const [cartBadge, setCartBadge] = useState<ICartBadge>({
-    load_session_id: null,
-    loads_count: 0,
-  });
-
-  const fetchLoads = (filterSearch: string) => {
-    setLoading(true);
-    getLoads(
-      filterSearch || undefined
-    )
-      .then((data) => {
-        if (Array.isArray(data.items)) {
-          setLoads(data.items);
-        } else {
-          console.error('Получены неверные данные:', data);
-          setLoads([]);
-        }
-      })
-      .finally(() => setLoading(false));
-  };
+  const { loads, loading } = useSelector((state: RootState) => state.loads);
+  const { session_id, count } = useSelector((state: RootState) => state.loadSession);
+  const { isAuthenticated } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
-    fetchLoads(searchTerm);
-    getCartBadge().then((cartData) => {
-      setCartBadge(cartData);
-    });
-  }, []);
+    dispatch(getLoadsList({ search: searchTerm }));
+    if (isAuthenticated) {
+      dispatch(fetchCartBadge());
+    }
+  }, [dispatch, isAuthenticated]);
 
   const handleSearchSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    fetchLoads(searchTerm);
+    dispatch(getLoadsList({ search: searchTerm }));
   };
 
   const handleCartClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    try {
-      const cartData = await getCartBadge();
-      setCartBadge(cartData);
-      if (cartData.load_session_id) {
-        alert(
-          `Переход на страницу заявки (ID: ${cartData.load_session_id}) будет реализован.`
-        );
+    
+    // Всегда обновляем данные корзины при клике
+    if (isAuthenticated) {
+      const result = await dispatch(fetchCartBadge());
+      if (fetchCartBadge.fulfilled.match(result)) {
+        const { load_session_id, loads_count } = result.payload;
+        // Переход только если корзина не пустая (id не null, не -1, и количество > 0)
+        if (load_session_id && load_session_id !== -1 && loads_count > 0) {
+          navigate(`/orders/${load_session_id}`);
+        }
       }
-    } catch (error) {
-      console.error('Error fetching cart:', error);
+    } else {
+      // Если не авторизован, используем текущие значения из state
+      if (session_id && session_id !== -1 && count > 0) {
+        navigate(`/orders/${session_id}`);
+      }
     }
+    // Если корзина пустая, ничего не делаем
   };
 
-  const isCartActive =
-    cartBadge.loads_count > 0 && cartBadge.load_session_id !== null;
+  const isCartActive = count > 0 && session_id !== null && session_id !== -1;
 
   const breadcrumbs = [{ label: 'Нагрузки', active: true }];
 
@@ -98,10 +87,6 @@ export const LoadsListPage = () => {
                 type="submit"
                 className="all-btn"
                 variant="primary"
-                onClick={(e) => {
-                  e.preventDefault();
-                  fetchLoads(searchTerm);
-                }}
               >
                 Найти
               </Button>
@@ -115,7 +100,7 @@ export const LoadsListPage = () => {
         <div
           onClick={handleCartClick}
           title={isCartActive ? "Перейти к заявке" : "Корзина"}
-          style={{ cursor: 'pointer', display: 'inline-block' }}
+          style={{ cursor: isCartActive ? 'pointer' : 'default', display: 'inline-block' }}
         >
           <Image
             src="/mock_images/cart.png"
@@ -126,7 +111,7 @@ export const LoadsListPage = () => {
         </div>
         {isCartActive && (
           <Badge pill className="cart-indicator">
-            {cartBadge.loads_count}
+            {count}
           </Badge>
         )}
       </div>

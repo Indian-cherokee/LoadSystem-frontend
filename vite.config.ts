@@ -68,6 +68,21 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        secure: false,
+        // НЕ убираем /api, так как бэкенд ожидает пути с /api
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req) => {
+            // Изменяем Origin на тот, который принимает бэкенд
+            proxyReq.setHeader('Origin', 'http://localhost:8080');
+            console.log('Sending Request to the Target:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req) => {
+            console.log('Received Response from the Target:', proxyRes.statusCode, req.url);
+          });
+        },
       },
     },
   },

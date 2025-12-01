@@ -1,7 +1,11 @@
 import { Row, Col, Button } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import type { ILoad } from '../types';
-import { isAuthenticated } from '../api/loadsApi';
+import type { RootState, AppDispatch } from '../store';
+import { addLoadToSession, fetchCartBadge } from '../store/slices/loadSessionSlice';
+import { getLoadsList } from '../store/slices/loadsSlice';
+import { selectSearchTerm } from '../store/slices/filterSlice';
 import './styles/LoadCard.css';
 
 export const DefaultImage = '/mock_images/default.png';
@@ -11,6 +15,25 @@ interface LoadCardProps {
 }
 
 export const LoadCard: React.FC<LoadCardProps> = ({ load }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { isAuthenticated } = useSelector((state: RootState) => state.user);
+  const searchTerm = useSelector(selectSearchTerm);
+
+  const handleAdd = async () => {
+    if (isAuthenticated) {
+      try {
+        await dispatch(addLoadToSession(load.id)).unwrap();
+        // Обновляем список нагрузок для обновления бейджика
+        dispatch(getLoadsList({ search: searchTerm }));
+        dispatch(fetchCartBadge());
+      } catch (error: any) {
+        alert(error || 'Ошибка при добавлении нагрузки');
+      }
+    } else {
+      alert('Необходимо войти в систему для добавления нагрузок в заявку');
+    }
+  };
+
   return (
     <div className="p-4 rounded shadow-sm h-100 load-card d-flex flex-column">
       <Row className="align-items-start flex-grow-1 mb-0">
@@ -44,8 +67,14 @@ export const LoadCard: React.FC<LoadCardProps> = ({ load }) => {
                 Подробнее
               </Button>
             </Link>
-            {isAuthenticated() && (
-              <Button className="all-btn" variant="primary" size="sm">
+            {isAuthenticated && (
+              <Button
+                className="all-btn"
+                variant="warning"
+                size="sm"
+                onClick={handleAdd}
+                style={{ backgroundColor: '#fdc300', borderColor: '#fdc300', color: '#000' }}
+              >
                 Добавить
               </Button>
             )}
