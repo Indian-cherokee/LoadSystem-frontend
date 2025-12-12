@@ -19,7 +19,6 @@ export const RegisterPage = () => {
 
   useEffect(() => {
     if (registerSuccess) {
-      alert("Регистрация успешна! Теперь войдите.");
       navigate('/login');
     }
   }, [registerSuccess, navigate]);
