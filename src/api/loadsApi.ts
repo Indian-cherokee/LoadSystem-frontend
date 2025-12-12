@@ -1,9 +1,29 @@
 import type { IPaginatedLoads, ILoad, ICartBadge } from '../types';
 import { LOADS_MOCK } from './mock';
 
-// Определяем URL бэкенда: используем переменную окружения или относительный путь для dev
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
-const API_PREFIX = API_BASE_URL ? `${API_BASE_URL}/api` : '/api';
+// Определяем URL бэкенда
+// В dev режиме (localhost) используем прокси Vite (/api)
+// В production используем переменную окружения VITE_API_URL
+// Если переменная не задана, будет использоваться относительный путь (не сработает на GitHub Pages)
+const getApiPrefix = (): string => {
+  // Если задана переменная окружения, используем её
+  if (import.meta.env.VITE_API_URL) {
+    const baseUrl = import.meta.env.VITE_API_URL.trim();
+    // Убираем trailing slash если есть
+    return baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}/api` : `${baseUrl}/api`;
+  }
+  
+  // В dev режиме используем прокси
+  if (import.meta.env.DEV) {
+    return '/api';
+  }
+  
+  // В production без переменной окружения - используем относительный путь
+  // Это не сработает на GitHub Pages, но может работать если фронтенд и бэкенд на одном домене
+  return '/api';
+};
+
+const API_PREFIX = getApiPrefix();
 
 // Проверка авторизации пользователя
 export const isAuthenticated = (): boolean => {
