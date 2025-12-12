@@ -64,11 +64,6 @@ export const LoadsListPage = () => {
     try {
       const cartData = await getCartBadge();
       setCartBadge(cartData);
-      if (cartData.load_session_id) {
-        alert(
-          `Переход на страницу заявки (ID: ${cartData.load_session_id}) будет реализован.`
-        );
-      }
     } catch (error) {
       console.error('Error fetching cart:', error);
     }
