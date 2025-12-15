@@ -45,20 +45,18 @@ export const LoadsListPage = () => {
   const handleCartClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Всегда обновляем данные корзины при клике
     if (isAuthenticated) {
       const result = await dispatch(fetchCartBadge());
       if (fetchCartBadge.fulfilled.match(result)) {
         const { load_session_id, loads_count } = result.payload;
-        // Переход только если корзина не пустая (id не null, не -1, и количество > 0)
         if (load_session_id && load_session_id !== -1 && loads_count > 0) {
-          navigate(`/orders/${load_session_id}`);
+          navigate(`/load_sessions/${load_session_id}`);
         }
       }
     } else {
       // Если не авторизован, используем текущие значения из state
       if (session_id && session_id !== -1 && count > 0) {
-        navigate(`/orders/${session_id}`);
+        navigate(`/load_sessions/${session_id}`);
       }
     }
     // Если корзина пустая, ничего не делаем

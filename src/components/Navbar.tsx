@@ -55,7 +55,7 @@ export const AppNavbar = () => {
               <Nav.Link 
                 className="fs-5" 
                 as={Link} 
-                to="/orders"
+                to="/load_sessions"
                 style={{ color: '#000000' }}
               >
                 Заявки

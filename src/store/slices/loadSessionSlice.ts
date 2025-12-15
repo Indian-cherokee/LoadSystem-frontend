@@ -57,7 +57,6 @@ export const fetchLoadSessionById = createAsyncThunk(
       const response = await api.loadSessions.loadSessionsDetail(parseInt(id));
       const session = response.data;
       
-      // Преобразуем данные в нужный формат
       return {
         id: session.id,
         status: session.status,
@@ -69,9 +68,9 @@ export const fetchLoadSessionById = createAsyncThunk(
             load_category: load.load_category,
             load_image: load.load_image,
             normative: load.normative,
-            reliability_coefficient: 0, // Если нет в ответе
+            reliability_coefficient: 0, 
           },
-          count: load.area || 1, // area используется как количество/площадь
+          count: load.area || 1, 
         })) || [],
         creation_date: session.created_at,
         forming_date: session.formed_at,
@@ -85,41 +84,65 @@ export const fetchLoadSessionById = createAsyncThunk(
 
 export const addLoadToSession = createAsyncThunk(
   'loadSession/addLoad',
-  async (loadId: number, { dispatch, rejectWithValue }) => {
+  async (loadId: number, { rejectWithValue }) => {
     try {
       await api.loadSessions.draftLoadsCreate(loadId);
       
-      dispatch(fetchCartBadge());
-      return { success: true };
+      // Получаем обновленный badge корзины
+      const badgeResponse = await api.loadSessions.cartList();
+      return {
+        success: true,
+        load_session_id: badgeResponse.data.load_session_id ?? null,
+        loads_count: badgeResponse.data.loads_count ?? 0,
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.description || error.message || 'Ошибка при добавлении нагрузки');
     }
   }
 );
 
-// Удаление нагрузки из заявки
 export const removeLoadFromSession = createAsyncThunk(
   'loadSession/removeLoad',
-  async ({ sessionId, loadId }: { sessionId: number; loadId: number }, { dispatch, rejectWithValue }) => {
+  async ({ sessionId, loadId }: { sessionId: number; loadId: number }, { rejectWithValue }) => {
     try {
       await api.loadSessions.loadsDelete(sessionId, loadId);
 
-      // Обновляем данные заявки
-      dispatch(fetchLoadSessionById(sessionId.toString()));
-      return loadId;
+      const response = await api.loadSessions.loadSessionsDetail(sessionId);
+      const session = response.data;
+      
+      return {
+        loadId,
+        session: {
+          id: session.id,
+          status: session.status,
+          room_type: session.room_type,
+          loads: session.loads?.map((load: any) => ({
+            load: {
+              id: load.load_id,
+              load_title: load.load_title,
+              load_category: load.load_category,
+              load_image: load.load_image,
+              normative: load.normative,
+              reliability_coefficient: 0,
+            },
+            count: load.area || 1,
+          })) || [],
+          creation_date: session.created_at,
+          forming_date: session.formed_at,
+          completion_date: session.completed_at,
+        },
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.description || error.message || 'Ошибка при удалении нагрузки');
     }
   }
 );
 
-// Обновление количества нагрузки в заявке
 export const updateLoadCount = createAsyncThunk(
   'loadSession/updateLoadCount',
   async ({ sessionId, loadId, count }: { sessionId: number; loadId: number; count: number }, { rejectWithValue }) => {
     try {
       await api.loadSessions.loadsUpdate(sessionId, loadId, { area: count });
-      // НЕ перезагружаем всю заявку, чтобы сохранить порядок услуг
       return { loadId, count };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.description || error.message || 'Ошибка при обновлении количества');
@@ -127,7 +150,6 @@ export const updateLoadCount = createAsyncThunk(
   }
 );
 
-// Сохранение заявки
 export const saveLoadSession = createAsyncThunk(
   'loadSession/save',
   async ({ sessionId, data }: { sessionId: number; data: any }, { rejectWithValue }) => {
@@ -140,7 +162,6 @@ export const saveLoadSession = createAsyncThunk(
   }
 );
 
-// Удаление заявки
 export const deleteLoadSession = createAsyncThunk(
   'loadSession/delete',
   async (sessionId: number, { rejectWithValue }) => {
@@ -156,12 +177,35 @@ export const deleteLoadSession = createAsyncThunk(
 // Подтверждение заявки (формирование)
 export const submitLoadSession = createAsyncThunk(
   'loadSession/submit',
-  async (sessionId: number, { dispatch, rejectWithValue }) => {
+  async (sessionId: number, { rejectWithValue }) => {
     try {
       await api.loadSessions.formUpdate(sessionId);
 
-      dispatch(fetchLoadSessionById(sessionId.toString()));
-      return { success: true };
+      const response = await api.loadSessions.loadSessionsDetail(sessionId);
+      const session = response.data;
+      
+      return {
+        success: true,
+        session: {
+          id: session.id,
+          status: session.status,
+          room_type: session.room_type,
+          loads: session.loads?.map((load: any) => ({
+            load: {
+              id: load.load_id,
+              load_title: load.load_title,
+              load_category: load.load_category,
+              load_image: load.load_image,
+              normative: load.normative,
+              reliability_coefficient: 0,
+            },
+            count: load.area || 1,
+          })) || [],
+          creation_date: session.created_at,
+          forming_date: session.formed_at,
+          completion_date: session.completed_at,
+        },
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.description || error.message || 'Ошибка при формировании заявки');
     }
@@ -184,8 +228,6 @@ export const fetchUserLoadSessions = createAsyncThunk(
       console.log('API response.data:', response.data);
       console.log('API response.data.items:', response.data?.items);
       
-      // Бэкенд уже возвращает данные с правильными именами полей
-      // creation_date, forming_date, completion_date уже есть в ответе
       return response.data;
     } catch (error: any) {
       console.error('API error:', error);
@@ -245,10 +287,27 @@ const loadSessionSlice = createSlice({
         state.error = action.payload as string;
       })
 
+      // === ADD LOAD ===
+      .addCase(addLoadToSession.fulfilled, (state, action) => {
+        state.session_id = action.payload.load_session_id;
+        state.count = action.payload.loads_count ?? 0;
+      })
+      .addCase(addLoadToSession.rejected, (state, action) => {
+        state.error = action.payload as string;
+      })
+
       // === REMOVE LOAD ===
       .addCase(removeLoadFromSession.fulfilled, (state, action) => {
-        state.loads = state.loads.filter(load => load.load.id !== action.payload);
-        state.count = state.loads.length;
+        const session = action.payload.session;
+        state.session_id = session.id || null;
+        state.loads = session.loads || [];
+        state.count = session.loads?.length || 0;
+        state.isDraft = session.status === 1;
+        state.status = session.status;
+        state.room_type = session.room_type;
+      })
+      .addCase(removeLoadFromSession.rejected, (state, action) => {
+        state.error = action.payload as string;
       })
 
       // === UPDATE LOAD COUNT ===
@@ -275,6 +334,20 @@ const loadSessionSlice = createSlice({
         if (action.payload.data?.room_type !== undefined) {
           state.room_type = action.payload.data.room_type;
         }
+      })
+
+      // === SUBMIT SESSION ===
+      .addCase(submitLoadSession.fulfilled, (state, action) => {
+        const session = action.payload.session;
+        state.session_id = session.id || null;
+        state.loads = session.loads || [];
+        state.count = session.loads?.length || 0;
+        state.isDraft = session.status === 1;
+        state.status = session.status;
+        state.room_type = session.room_type;
+      })
+      .addCase(submitLoadSession.rejected, (state, action) => {
+        state.error = action.payload as string;
       })
 
       // === LOGOUT ===

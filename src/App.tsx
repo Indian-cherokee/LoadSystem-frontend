@@ -29,8 +29,8 @@ function App() {
           <Route path="/loads" element={<LoadsListPage />} />
           <Route path="/loads/:id" element={<LoadDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/orders" element={<OrdersListPage />} />
-          <Route path="/orders/:id" element={<OrderPage />} />
+          <Route path="/load_sessions" element={<OrdersListPage />} />
+          <Route path="/load_sessions/:id" element={<OrderPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
