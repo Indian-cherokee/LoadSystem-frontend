@@ -7,6 +7,7 @@ interface UserState {
     id?: number;
     username?: string;
     full_name?: string;
+    moderator?: boolean;
   } | null;
   token: string | null;
   isAuthenticated: boolean;
@@ -179,7 +180,12 @@ const userSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
         state.token = action.payload.token || null;
-        state.user = action.payload.user || null;
+        state.user = action.payload.user ? {
+          id: action.payload.user.id,
+          username: action.payload.user.username,
+          full_name: action.payload.user.full_name,
+          moderator: action.payload.user.moderator || false,
+        } : null;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;

@@ -33,7 +33,7 @@ const initialState: LoadSessionState = {
 // Получение бейджика корзины
 export const fetchCartBadge = createAsyncThunk(
   'loadSession/fetchCartBadge',
-  async (_, { rejectWithValue }) => {
+  async () => {
     try {
       console.log('Fetching cart badge...');
       const response = await api.loadSessions.cartList();
@@ -64,17 +64,18 @@ export const fetchLoadSessionById = createAsyncThunk(
         loads: session.loads?.map((load: any) => ({
           load: {
             id: load.load_id,
-            load_title: load.load_title,
-            load_category: load.load_category,
+            load_title: load.load_title || '',
+            load_description: load.load_description || '',
+            load_category: load.load_category || '',
             load_image: load.load_image,
-            normative: load.normative,
-            reliability_coefficient: 0, 
+            normative: load.normative || 0,
+            reliability_coefficient: load.reliability_coefficient || 0, 
           },
           count: load.area || 1, 
         })) || [],
         creation_date: session.created_at,
-        forming_date: session.formed_at,
-        completion_date: session.completed_at,
+        forming_date: undefined,
+        completion_date: undefined,
       };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.description || error.message || 'Ошибка при загрузке заявки');
@@ -119,17 +120,18 @@ export const removeLoadFromSession = createAsyncThunk(
           loads: session.loads?.map((load: any) => ({
             load: {
               id: load.load_id,
-              load_title: load.load_title,
-              load_category: load.load_category,
+              load_title: load.load_title || '',
+              load_description: load.load_description || '',
+              load_category: load.load_category || '',
               load_image: load.load_image,
-              normative: load.normative,
-              reliability_coefficient: 0,
+              normative: load.normative || 0,
+              reliability_coefficient: load.reliability_coefficient || 0,
             },
             count: load.area || 1,
           })) || [],
           creation_date: session.created_at,
-          forming_date: session.formed_at,
-          completion_date: session.completed_at,
+          forming_date: undefined,
+          completion_date: undefined,
         },
       };
     } catch (error: any) {
@@ -193,17 +195,18 @@ export const submitLoadSession = createAsyncThunk(
           loads: session.loads?.map((load: any) => ({
             load: {
               id: load.load_id,
-              load_title: load.load_title,
-              load_category: load.load_category,
+              load_title: load.load_title || '',
+              load_description: load.load_description || '',
+              load_category: load.load_category || '',
               load_image: load.load_image,
-              normative: load.normative,
-              reliability_coefficient: 0,
+              normative: load.normative || 0,
+              reliability_coefficient: load.reliability_coefficient || 0,
             },
             count: load.area || 1,
           })) || [],
           creation_date: session.created_at,
-          forming_date: session.formed_at,
-          completion_date: session.completed_at,
+          forming_date: undefined,
+          completion_date: undefined,
         },
       };
     } catch (error: any) {
@@ -215,7 +218,7 @@ export const submitLoadSession = createAsyncThunk(
 // Получение списка заявок пользователя
 export const fetchUserLoadSessions = createAsyncThunk(
   'loadSession/fetchUserSessions',
-  async (params?: { status?: string; from?: string; to?: string }, { rejectWithValue }) => {
+  async (params: { status?: string; from?: string; to?: string } = {}, { rejectWithValue }) => {
     try {
       console.log('API call params:', params);
       const response = await api.loadSessions.loadSessionsList({
@@ -233,6 +236,19 @@ export const fetchUserLoadSessions = createAsyncThunk(
       console.error('API error:', error);
       console.error('API error response:', error.response);
       return rejectWithValue(error.response?.data?.description || error.message || 'Ошибка при загрузке заявок');
+    }
+  }
+);
+
+// Изменение статуса заявки модератором (завершить/отклонить)
+export const resolveLoadSession = createAsyncThunk(
+  'loadSession/resolve',
+  async ({ sessionId, action }: { sessionId: number; action: 'complete' | 'reject' }, { rejectWithValue }) => {
+    try {
+      await api.loadSessions.resolveUpdate(sessionId, { action });
+      return { sessionId, action };
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.description || error.message || 'Ошибка при изменении статуса заявки');
     }
   }
 );

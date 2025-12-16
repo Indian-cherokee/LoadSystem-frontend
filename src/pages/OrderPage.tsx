@@ -132,7 +132,7 @@ export const OrderPage = () => {
         // Если room_type был NULL, устанавливаем его (даже пустую строку), чтобы отметить заявку как сохраненную
         const roomTypeToSave = localRoomType || '';
         await dispatch(saveLoadSession({ sessionId: session_id, data: { room_type: roomTypeToSave } })).unwrap();
-        navigate('/loads');
+        // Остаемся на странице корзины после сохранения
       } catch (err) {
         dispatch(setError('Ошибка при сохранении заявки'));
       }

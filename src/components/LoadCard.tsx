@@ -27,7 +27,8 @@ export const LoadCard: React.FC<LoadCardProps> = ({ load }) => {
         dispatch(getLoadsList({ search: searchTerm }));
         dispatch(fetchCartBadge());
       } catch (error: any) {
-        alert(error || 'Ошибка при добавлении нагрузки');
+        // Ошибка обрабатывается тихо, без показа алерта
+        console.warn('Error adding load to session:', error);
       }
     } else {
       alert('Необходимо войти в систему для добавления нагрузок в заявку');
