@@ -154,6 +154,31 @@ export const getLoads = async (
     return { items: filteredMockItems, total: filteredMockItems.length };
   }
 
+  // Дополнительная проверка: если мы в production на GitHub Pages без VITE_API_URL,
+  // не делаем запросы (должны были вернуться раньше, но на всякий случай)
+  if (isProductionOnGitHubPages()) {
+    console.log('Дополнительная проверка: используем моковые данные');
+    let filteredMockItems = LOADS_MOCK.items;
+    if (search) {
+      filteredMockItems = filteredMockItems.filter((load) =>
+        load.load_title.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+    if (category) {
+      filteredMockItems = filteredMockItems.filter(
+        (load) => load.load_category === category
+      );
+    }
+    if (minNormative !== undefined || maxNormative !== undefined) {
+      filteredMockItems = filteredMockItems.filter((load) => {
+        if (minNormative !== undefined && load.normative < minNormative) return false;
+        if (maxNormative !== undefined && load.normative > maxNormative) return false;
+        return true;
+      });
+    }
+    return { items: filteredMockItems, total: filteredMockItems.length };
+  }
+
   const params = new URLSearchParams();
   if (search) params.append('search', search);
   if (category) params.append('category', category);
@@ -224,6 +249,14 @@ export const getLoadById = async (id: string): Promise<ILoad | null> => {
     return null;
   }
   
+  // Дополнительная проверка: если мы в production на GitHub Pages без VITE_API_URL
+  if (isProductionOnGitHubPages()) {
+    console.log('Дополнительная проверка: используем моковые данные для getLoadById');
+    const load = LOADS_MOCK.items.find((l) => l.id === parseInt(id));
+    if (load) return load;
+    return null;
+  }
+  
   try {
     const response = await fetchWithTimeout(`${API_PREFIX}/loads/${id}`);
     if (!response.ok) {
@@ -246,6 +279,12 @@ export const getCartBadge = async (): Promise<ICartBadge> => {
   
   if (!backendAvailable) {
     console.log('Бэкенд недоступен, возвращаем пустую корзину');
+    return { load_session_id: null, loads_count: 0 };
+  }
+  
+  // Дополнительная проверка: если мы в production на GitHub Pages без VITE_API_URL
+  if (isProductionOnGitHubPages()) {
+    console.log('Дополнительная проверка: возвращаем пустую корзину');
     return { load_session_id: null, loads_count: 0 };
   }
   
