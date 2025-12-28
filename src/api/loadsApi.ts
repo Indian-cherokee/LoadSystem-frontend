@@ -25,6 +25,65 @@ const getApiPrefix = (): string => {
 
 const API_PREFIX = getApiPrefix();
 
+// Состояние доступности бэкенда
+let isBackendAvailable: boolean | null = null;
+
+// Получаем базовый URL для health check
+const getHealthUrl = (): string => {
+  // Если задана переменная окружения, используем её
+  if (import.meta.env.VITE_API_URL) {
+    const baseUrl = import.meta.env.VITE_API_URL.trim();
+    // Убираем trailing slash если есть
+    return baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}/health` : `${baseUrl}/health`;
+  }
+  
+  // В dev режиме используем прокси
+  if (import.meta.env.DEV) {
+    return '/health';
+  }
+  
+  // В production без переменной окружения - используем относительный путь
+  return '/health';
+};
+
+// Вспомогательные функции
+const checkBackendAvailability = async (): Promise<boolean> => {
+  if (isBackendAvailable !== null) return isBackendAvailable;
+  
+  try {
+    // Используем GET вместо HEAD (более надёжно)
+    const healthUrl = getHealthUrl();
+    const response = await fetch(healthUrl, {
+      method: 'GET',
+      signal: AbortSignal.timeout(3000)
+    });
+    isBackendAvailable = response.ok;
+    console.log(`Бэкенд ${isBackendAvailable ? 'доступен' : 'недоступен'}`);
+  } catch (error) {
+    console.warn('Бэкенд недоступен, используем моковые данные', error);
+    isBackendAvailable = false;
+  }
+  
+  return isBackendAvailable;
+};
+
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 5000): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+};
+
 // Проверка авторизации пользователя
 export const isAuthenticated = (): boolean => {
   return !!localStorage.getItem('authToken');
@@ -37,6 +96,39 @@ export const getLoads = async (
   minNormative?: number,
   maxNormative?: number
 ): Promise<IPaginatedLoads> => {
+  const backendAvailable = await checkBackendAvailability();
+  
+  if (!backendAvailable) {
+    console.log('Используем моковые данные для getLoads');
+    let filteredMockItems = LOADS_MOCK.items;
+
+    if (search) {
+      filteredMockItems = filteredMockItems.filter((load) =>
+        load.load_title.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    if (category) {
+      filteredMockItems = filteredMockItems.filter(
+        (load) => load.load_category === category
+      );
+    }
+
+    if (minNormative !== undefined || maxNormative !== undefined) {
+      filteredMockItems = filteredMockItems.filter((load) => {
+        if (minNormative !== undefined && load.normative < minNormative) {
+          return false;
+        }
+        if (maxNormative !== undefined && load.normative > maxNormative) {
+          return false;
+        }
+        return true;
+      });
+    }
+
+    return { items: filteredMockItems, total: filteredMockItems.length };
+  }
+
   const params = new URLSearchParams();
   if (search) params.append('search', search);
   if (category) params.append('category', category);
@@ -52,10 +144,9 @@ export const getLoads = async (
     : `${API_PREFIX}/loads`;
 
   try {
-    const response = await fetch(url);
+    const response = await fetchWithTimeout(url);
     if (!response.ok) {
-      console.error('Backend response not OK:', response.status, response.statusText);
-      throw new Error(`Backend is not available: ${response.status}`);
+      throw new Error('Ошибка загрузки нагрузок');
     }
     const data = await response.json();
     console.log('Backend response:', data);
@@ -64,7 +155,9 @@ export const getLoads = async (
       total: data.items ? data.items.length : 0,
     };
   } catch (error) {
-    console.warn('Failed to fetch from backend, using mock data.', error);
+    console.warn('Ошибка при запросе нагрузок, используем моки', error);
+    isBackendAvailable = false;
+    
     let filteredMockItems = LOADS_MOCK.items;
 
     if (search) {
@@ -97,21 +190,40 @@ export const getLoads = async (
 
 // Получение одной нагрузки по ID
 export const getLoadById = async (id: string): Promise<ILoad | null> => {
+  const backendAvailable = await checkBackendAvailability();
+  
+  if (!backendAvailable) {
+    console.log('Используем моковые данные для getLoadById');
+    const load = LOADS_MOCK.items.find((l) => l.id === parseInt(id));
+    if (load) return load;
+    return null;
+  }
+  
   try {
-    const response = await fetch(`${API_PREFIX}/loads/${id}`);
+    const response = await fetchWithTimeout(`${API_PREFIX}/loads/${id}`);
     if (!response.ok) {
-      throw new Error('Backend is not available');
+      throw new Error('Load not found');
     }
     return await response.json();
   } catch (error) {
-    console.warn(`Failed to fetch load ${id}, using mock data.`, error);
+    console.warn('Ошибка при запросе нагрузки по ID, используем моки', error);
+    isBackendAvailable = false;
+    
     const load = LOADS_MOCK.items.find((l) => l.id === parseInt(id));
-    return load || null;
+    if (load) return load;
+    return null;
   }
 };
 
 // Получение корзины (всегда обращается к бэкенду)
 export const getCartBadge = async (): Promise<ICartBadge> => {
+  const backendAvailable = await checkBackendAvailability();
+  
+  if (!backendAvailable) {
+    console.log('Бэкенд недоступен, возвращаем пустую корзину');
+    return { load_session_id: null, loads_count: 0 };
+  }
+  
   try {
     const token = localStorage.getItem('authToken');
     
@@ -120,7 +232,7 @@ export const getCartBadge = async (): Promise<ICartBadge> => {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_PREFIX}/load-sessions/cart`, {
+    const response = await fetchWithTimeout(`${API_PREFIX}/load-sessions/cart`, {
       headers,
       credentials: 'include',
     });
@@ -131,7 +243,34 @@ export const getCartBadge = async (): Promise<ICartBadge> => {
     return await response.json();
   } catch (error) {
     console.warn('Could not fetch cart data, assuming cart is empty.', error);
+    isBackendAvailable = false;
     return { load_session_id: null, loads_count: 0 };
   }
+};
+
+// Дополнительные функции для управления режимом
+export const forceMockMode = (): void => {
+  isBackendAvailable = false;
+  console.log('Принудительно включен режим моковых данных');
+};
+
+export const forceBackendMode = (): void => {
+  isBackendAvailable = true;
+  console.log('Принудительно включен режим бэкенда');
+};
+
+export const resetBackendCheck = (): void => {
+  isBackendAvailable = null;
+  console.log('Сброшена проверка доступности бэкенда');
+};
+
+export const isUsingMockData = (): boolean => {
+  return isBackendAvailable === false;
+};
+
+export const getBackendStatus = (): 'checking' | 'available' | 'unavailable' => {
+  if (isBackendAvailable === null) return 'checking';
+  if (isBackendAvailable === true) return 'available';
+  return 'unavailable';
 };
 
