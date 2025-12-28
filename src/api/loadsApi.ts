@@ -28,6 +28,12 @@ const API_PREFIX = getApiPrefix();
 // Состояние доступности бэкенда
 let isBackendAvailable: boolean | null = null;
 
+// Проверяем, находимся ли мы в production на GitHub Pages
+const isProductionOnGitHubPages = (): boolean => {
+  // Проверяем, что мы не в dev режиме и нет VITE_API_URL
+  return !import.meta.env.DEV && !import.meta.env.VITE_API_URL;
+};
+
 // Получаем базовый URL для health check
 const getHealthUrl = (): string | null => {
   // Если задана переменная окружения, используем её
@@ -51,9 +57,16 @@ const getHealthUrl = (): string | null => {
 const checkBackendAvailability = async (): Promise<boolean> => {
   if (isBackendAvailable !== null) return isBackendAvailable;
   
+  // Если мы в production на GitHub Pages без VITE_API_URL, сразу используем моки
+  if (isProductionOnGitHubPages()) {
+    console.log('Production на GitHub Pages без VITE_API_URL, используем моковые данные');
+    isBackendAvailable = false;
+    return false;
+  }
+  
   const healthUrl = getHealthUrl();
   
-  // Если нет URL для проверки (production без VITE_API_URL), используем моки
+  // Если нет URL для проверки, используем моки
   if (healthUrl === null) {
     console.log('VITE_API_URL не задана, используем моковые данные');
     isBackendAvailable = false;
@@ -69,7 +82,10 @@ const checkBackendAvailability = async (): Promise<boolean> => {
     isBackendAvailable = response.ok;
     console.log(`Бэкенд ${isBackendAvailable ? 'доступен' : 'недоступен'}`);
   } catch (error) {
-    console.warn('Бэкенд недоступен, используем моковые данные', error);
+    // Не логируем ошибку как warning, если это ожидаемое поведение
+    if (!isProductionOnGitHubPages()) {
+      console.warn('Бэкенд недоступен, используем моковые данные', error);
+    }
     isBackendAvailable = false;
   }
   
