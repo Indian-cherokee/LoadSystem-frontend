@@ -29,7 +29,7 @@ const API_PREFIX = getApiPrefix();
 let isBackendAvailable: boolean | null = null;
 
 // Получаем базовый URL для health check
-const getHealthUrl = (): string => {
+const getHealthUrl = (): string | null => {
   // Если задана переменная окружения, используем её
   if (import.meta.env.VITE_API_URL) {
     const baseUrl = import.meta.env.VITE_API_URL.trim();
@@ -42,17 +42,26 @@ const getHealthUrl = (): string => {
     return '/health';
   }
   
-  // В production без переменной окружения - используем относительный путь
-  return '/health';
+  // В production без переменной окружения - не проверяем бэкенд
+  // (так как на GitHub Pages нет доступа к бэкенду без публичного URL)
+  return null;
 };
 
 // Вспомогательные функции
 const checkBackendAvailability = async (): Promise<boolean> => {
   if (isBackendAvailable !== null) return isBackendAvailable;
   
+  const healthUrl = getHealthUrl();
+  
+  // Если нет URL для проверки (production без VITE_API_URL), используем моки
+  if (healthUrl === null) {
+    console.log('VITE_API_URL не задана, используем моковые данные');
+    isBackendAvailable = false;
+    return false;
+  }
+  
   try {
     // Используем GET вместо HEAD (более надёжно)
-    const healthUrl = getHealthUrl();
     const response = await fetch(healthUrl, {
       method: 'GET',
       signal: AbortSignal.timeout(3000)
