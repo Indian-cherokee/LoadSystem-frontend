@@ -1,11 +1,38 @@
 import type { IPaginatedLoads, ILoad, ICartBadge } from '../types';
 import { LOADS_MOCK } from './mock';
 
+// ============================================
+// НАСТРОЙКА URL БЭКЕНДА
+// ============================================
+// Для подключения к бэкенду на вашем компьютере:
+// 1. Используйте ngrok или другой туннель для получения публичного URL
+// 2. Укажите URL здесь или через переменную окружения VITE_API_URL
+// 
+// Пример с ngrok:
+// 1. Установите ngrok: https://ngrok.com/
+// 2. Запустите: ngrok http 8080
+// 3. Скопируйте HTTPS URL (например: https://abc123.ngrok.io)
+// 4. Укажите его ниже в BACKEND_URL или в .env.production как VITE_API_URL
+
+// УКАЖИТЕ ЗДЕСЬ URL ВАШЕГО БЭКЕНДА
+// ВАЖНО: localhost работает ТОЛЬКО для локальной разработки!
+// Для GitHub Pages нужен публичный URL (ngrok или другой туннель)
+const BACKEND_URL = 'http://localhost:8080'; // Для локальной разработки
+// Для GitHub Pages используйте: 'https://ваш-ngrok-url.ngrok.io'
+
+// ============================================
+
 // Определяем URL бэкенда
 // В dev режиме (localhost) используем прокси Vite (/api)
-// В production используем переменную окружения VITE_API_URL
-// Если переменная не задана, будет использоваться относительный путь (не сработает на GitHub Pages)
+// В production используем BACKEND_URL или переменную окружения VITE_API_URL
 const getApiPrefix = (): string => {
+  // Если указан BACKEND_URL в коде, используем его
+  if (BACKEND_URL && BACKEND_URL.trim()) {
+    const baseUrl = BACKEND_URL.trim();
+    // Убираем trailing slash если есть
+    return baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}/api` : `${baseUrl}/api`;
+  }
+  
   // Если задана переменная окружения, используем её
   if (import.meta.env.VITE_API_URL) {
     const baseUrl = import.meta.env.VITE_API_URL.trim();
@@ -18,8 +45,7 @@ const getApiPrefix = (): string => {
     return '/api';
   }
   
-  // В production без переменной окружения - используем относительный путь
-  // Это не сработает на GitHub Pages, но может работать если фронтенд и бэкенд на одном домене
+  // В production без URL - используем относительный путь (не сработает на GitHub Pages)
   return '/api';
 };
 
@@ -30,12 +56,18 @@ let isBackendAvailable: boolean | null = null;
 
 // Проверяем, находимся ли мы в production на GitHub Pages
 const isProductionOnGitHubPages = (): boolean => {
-  // Проверяем, что мы не в dev режиме и нет VITE_API_URL
-  return !import.meta.env.DEV && !import.meta.env.VITE_API_URL;
+  // Проверяем, что мы не в dev режиме и нет ни BACKEND_URL, ни VITE_API_URL
+  return !import.meta.env.DEV && !BACKEND_URL && !import.meta.env.VITE_API_URL;
 };
 
 // Получаем базовый URL для health check
 const getHealthUrl = (): string | null => {
+  // Если указан BACKEND_URL в коде, используем его
+  if (BACKEND_URL && BACKEND_URL.trim()) {
+    const baseUrl = BACKEND_URL.trim();
+    return baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}/health` : `${baseUrl}/health`;
+  }
+  
   // Если задана переменная окружения, используем её
   if (import.meta.env.VITE_API_URL) {
     const baseUrl = import.meta.env.VITE_API_URL.trim();
@@ -48,8 +80,7 @@ const getHealthUrl = (): string | null => {
     return '/health';
   }
   
-  // В production без переменной окружения - не проверяем бэкенд
-  // (так как на GitHub Pages нет доступа к бэкенду без публичного URL)
+  // В production без URL - не проверяем бэкенд
   return null;
 };
 
