@@ -17,9 +17,12 @@ import {
   setSearchTerm,
   selectSearchTerm,
 } from '../store/slices/filterSlice';
-import { getLoadsList } from '../store/slices/loadsSlice';
+import { GetLoadsList } from '../hooks/useLoads';
+import { setLoads, setLoading } from '../store/slices/loadsSlice';
 import { fetchCartBadge } from '../store/slices/loadSessionSlice';
 import { CustomBreadcrumbs } from '../components/Breadcrumbs';
+import { api } from '../api';
+import { LOADS_MOCK } from '../api/mock';
 import './styles/LoadsListPage.css';
 
 export const LoadsListPage = () => {
@@ -30,16 +33,44 @@ export const LoadsListPage = () => {
   const { session_id, count } = useSelector((state: RootState) => state.loadSession);
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
 
+  // без thunk
+  GetLoadsList({ search: searchTerm });
+
   useEffect(() => {
-    dispatch(getLoadsList({ search: searchTerm }));
     if (isAuthenticated) {
       dispatch(fetchCartBadge());
     }
   }, [dispatch, isAuthenticated]);
 
-  const handleSearchSubmit = (event: React.FormEvent) => {
+  const handleSearchSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    dispatch(getLoadsList({ search: searchTerm }));
+    dispatch(setLoading(true));
+    try {
+      const response = await api.loads.loadsList({
+        search: searchTerm,
+      });
+      
+      const data = response.data;
+      dispatch(setLoads({
+        items: Array.isArray(data.items) ? data.items : [],
+        total: data.total || 0,
+      }));
+    } catch (error) {
+      // Fallback на мок-данные
+      console.warn('Failed to fetch from backend, using mock data.', error);
+      let filteredMockItems = LOADS_MOCK.items;
+
+      if (searchTerm) {
+        filteredMockItems = filteredMockItems.filter((load) =>
+          load.load_title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      dispatch(setLoads({
+        items: filteredMockItems,
+        total: filteredMockItems.length,
+      }));
+    }
   };
 
   const handleCartClick = async (e: React.MouseEvent) => {

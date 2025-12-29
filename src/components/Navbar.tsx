@@ -2,8 +2,10 @@ import { Navbar, Container, Nav, Button } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { logoutUser } from '../store/slices/userSlice';
-import { getLoadsList } from '../store/slices/loadsSlice';
+import { setLoads, setLoading } from '../store/slices/loadsSlice';
 import { setSearchTerm } from '../store/slices/filterSlice';
+import { api } from '../api';
+import { LOADS_MOCK } from '../api/mock';
 import type { RootState, AppDispatch } from '../store';
 
 export const AppNavbar = () => {
@@ -14,7 +16,22 @@ export const AppNavbar = () => {
   const handleLogout = async () => {
     await dispatch(logoutUser());
     dispatch(setSearchTerm(''));
-    dispatch(getLoadsList({ search: '' }));
+    // Обновляем список нагрузок без thunk
+    dispatch(setLoading(true));
+    try {
+      const response = await api.loads.loadsList({ search: '' });
+      const data = response.data;
+      dispatch(setLoads({
+        items: Array.isArray(data.items) ? data.items : [],
+        total: data.total || 0,
+      }));
+    } catch (error) {
+      console.warn('Failed to fetch from backend, using mock data.', error);
+      dispatch(setLoads({
+        items: LOADS_MOCK.items,
+        total: LOADS_MOCK.items.length,
+      }));
+    }
     navigate('/loads');
   };
 

@@ -83,24 +83,7 @@ export const fetchLoadSessionById = createAsyncThunk(
   }
 );
 
-export const addLoadToSession = createAsyncThunk(
-  'loadSession/addLoad',
-  async (loadId: number, { rejectWithValue }) => {
-    try {
-      await api.loadSessions.draftLoadsCreate(loadId);
-      
-      // Получаем обновленный badge корзины
-      const badgeResponse = await api.loadSessions.cartList();
-      return {
-        success: true,
-        load_session_id: badgeResponse.data.load_session_id ?? null,
-        loads_count: badgeResponse.data.loads_count ?? 0,
-      };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.description || error.message || 'Ошибка при добавлении нагрузки');
-    }
-  }
-);
+// addLoadToSession убран - теперь используется хук (без thunk)
 
 export const removeLoadFromSession = createAsyncThunk(
   'loadSession/removeLoad',
@@ -268,6 +251,10 @@ const loadSessionSlice = createSlice({
     setError: (state, action) => {
       state.error = action.payload;
     },
+    updateCartBadge: (state, { payload }) => {
+      state.session_id = payload.load_session_id;
+      state.count = payload.loads_count ?? 0;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -300,15 +287,6 @@ const loadSessionSlice = createSlice({
       })
       .addCase(fetchLoadSessionById.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      })
-
-      // === ADD LOAD ===
-      .addCase(addLoadToSession.fulfilled, (state, action) => {
-        state.session_id = action.payload.load_session_id;
-        state.count = action.payload.loads_count ?? 0;
-      })
-      .addCase(addLoadToSession.rejected, (state, action) => {
         state.error = action.payload as string;
       })
 
@@ -371,6 +349,6 @@ const loadSessionSlice = createSlice({
   },
 });
 
-export const { clearCurrentSession, setError } = loadSessionSlice.actions;
+export const { clearCurrentSession, setError, updateCartBadge } = loadSessionSlice.actions;
 export default loadSessionSlice.reducer;
 

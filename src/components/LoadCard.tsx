@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { ILoad } from '../types';
 import type { RootState, AppDispatch } from '../store';
-import { addLoadToSession, fetchCartBadge } from '../store/slices/loadSessionSlice';
-import { getLoadsList } from '../store/slices/loadsSlice';
-import { selectSearchTerm } from '../store/slices/filterSlice';
+import { fetchCartBadge } from '../store/slices/loadSessionSlice';
+import { AddLoadToCart } from '../hooks/useLoads';
 import './styles/LoadCard.css';
 
 export const DefaultImage = '/mock_images/default.png';
@@ -17,17 +16,15 @@ interface LoadCardProps {
 export const LoadCard: React.FC<LoadCardProps> = ({ load }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
-  const searchTerm = useSelector(selectSearchTerm);
 
   const handleAdd = async () => {
     if (isAuthenticated) {
       try {
-        await dispatch(addLoadToSession(load.id)).unwrap();
-        // Обновляем список нагрузок для обновления бейджика
-        dispatch(getLoadsList({ search: searchTerm }));
+        // без thunk
+        await AddLoadToCart(load.id, dispatch);
+
         dispatch(fetchCartBadge());
       } catch (error: any) {
-        // Ошибка обрабатывается тихо, без показа алерта
         console.warn('Error adding load to session:', error);
       }
     } else {

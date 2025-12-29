@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../../api';
 
-// Тип состояния пользователя
+
 interface UserState {
   user: {
     id?: number;
@@ -25,8 +25,6 @@ const initialState: UserState = {
   error: null,
 };
 
-// НЕ восстанавливаем состояние из localStorage при перезагрузке
-// Пользователь должен заново авторизоваться после перезагрузки страницы
 
 // --- 1. ВХОД (Login) ---
 export const loginUser = createAsyncThunk(
@@ -84,7 +82,7 @@ export const registerUser = createAsyncThunk(
       let errorMessage = 'Ошибка регистрации';
       
       if (err.response) {
-        // Сервер ответил с ошибкой
+
         const status = err.response.status;
         const data = err.response.data;
         

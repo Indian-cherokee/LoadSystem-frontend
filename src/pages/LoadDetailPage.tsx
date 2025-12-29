@@ -1,31 +1,29 @@
-import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Container, Spinner, Row, Col, Button } from 'react-bootstrap';
-import { getLoadById, isAuthenticated } from '../api/loadsApi';
-import type { ILoad } from '../types';
+import { Container, Spinner, Button } from 'react-bootstrap';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../store';
+import { GetLoadById } from '../hooks/useLoads';
+import { isAuthenticated } from '../api/loadsApi';
 import { DefaultImage } from '../components/LoadCard';
 import { CustomBreadcrumbs } from '../components/Breadcrumbs';
 import './styles/LoadDetailPage.css';
 
 export const LoadDetailPage = () => {
   const { id } = useParams<{ id: string }>();
-  const [load, setLoad] = useState<ILoad | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { currentLoad, loading } = useSelector((state: RootState) => state.loads);
 
-  useEffect(() => {
-    if (id) {
-      setLoading(true);
-      getLoadById(id)
-        .then((data) => setLoad(data))
-        .finally(() => setLoading(false));
-    }
-  }, [id]);
+  //без thunk
+  if (id) {
+    GetLoadById(id);
+  }
+
+  const load = currentLoad;
 
   const displayImage = load?.load_image || DefaultImage;
 
   if (loading) {
     return (
-      <div className="load-detail-page">
+      <Container className="load-detail-page text-center mt-5 pt-5">
         <Spinner
           animation="border"
           style={{ 
@@ -35,7 +33,7 @@ export const LoadDetailPage = () => {
             borderColor: '#fdc300'
           }}
         />
-      </div>
+      </Container>
     );
   }
 
