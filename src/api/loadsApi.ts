@@ -1,51 +1,10 @@
 import type { IPaginatedLoads, ILoad, ICartBadge } from '../types';
 import { LOADS_MOCK } from './mock';
 
-// ============================================
-// НАСТРОЙКА URL БЭКЕНДА
-// ============================================
-// Для подключения к бэкенду на вашем компьютере:
-// 1. Используйте ngrok или другой туннель для получения публичного URL
-// 2. Укажите URL здесь или через переменную окружения VITE_API_URL
-// 
-// Пример с ngrok:
-// 1. Установите ngrok: https://ngrok.com/
-// 2. Запустите: ngrok http 8080
-// 3. Скопируйте HTTPS URL (например: https://abc123.ngrok.io)
-// 4. Укажите его ниже в BACKEND_URL или в .env.production как VITE_API_URL
-
-// УКАЖИТЕ ЗДЕСЬ URL ВАШЕГО БЭКЕНДА
-// ВАЖНО: localhost работает ТОЛЬКО для локальной разработки!
-// Для GitHub Pages нужен публичный URL (ngrok или другой туннель)
-const BACKEND_URL = 'http://localhost:8080'; // Для локальной разработки
-// Для GitHub Pages используйте: 'https://ваш-ngrok-url.ngrok.io'
-
-// ============================================
-
-// Определяем URL бэкенда
-// В dev режиме (localhost) используем прокси Vite (/api)
-// В production используем BACKEND_URL или переменную окружения VITE_API_URL
+// Используем относительные пути, как у друга
+// В dev режиме работает через прокси Vite на localhost:8080
+// В production на GitHub Pages будет работать, если настроен ngrok или другой туннель
 const getApiPrefix = (): string => {
-  // Если указан BACKEND_URL в коде, используем его
-  if (BACKEND_URL && BACKEND_URL.trim()) {
-    const baseUrl = BACKEND_URL.trim();
-    // Убираем trailing slash если есть
-    return baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}/api` : `${baseUrl}/api`;
-  }
-  
-  // Если задана переменная окружения, используем её
-  if (import.meta.env.VITE_API_URL) {
-    const baseUrl = import.meta.env.VITE_API_URL.trim();
-    // Убираем trailing slash если есть
-    return baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}/api` : `${baseUrl}/api`;
-  }
-  
-  // В dev режиме используем прокси
-  if (import.meta.env.DEV) {
-    return '/api';
-  }
-  
-  // В production без URL - используем относительный путь (не сработает на GitHub Pages)
   return '/api';
 };
 
@@ -54,69 +13,26 @@ const API_PREFIX = getApiPrefix();
 // Состояние доступности бэкенда
 let isBackendAvailable: boolean | null = null;
 
-// Проверяем, находимся ли мы в production на GitHub Pages
-const isProductionOnGitHubPages = (): boolean => {
-  // Проверяем, что мы не в dev режиме и нет ни BACKEND_URL, ни VITE_API_URL
-  return !import.meta.env.DEV && !BACKEND_URL && !import.meta.env.VITE_API_URL;
+
+// Используем относительный путь для health check, как у друга
+const getHealthUrl = (): string => {
+  return '/health';
 };
 
-// Получаем базовый URL для health check
-const getHealthUrl = (): string | null => {
-  // Если указан BACKEND_URL в коде, используем его
-  if (BACKEND_URL && BACKEND_URL.trim()) {
-    const baseUrl = BACKEND_URL.trim();
-    return baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}/health` : `${baseUrl}/health`;
-  }
-  
-  // Если задана переменная окружения, используем её
-  if (import.meta.env.VITE_API_URL) {
-    const baseUrl = import.meta.env.VITE_API_URL.trim();
-    // Убираем trailing slash если есть
-    return baseUrl.endsWith('/') ? `${baseUrl.slice(0, -1)}/health` : `${baseUrl}/health`;
-  }
-  
-  // В dev режиме используем прокси
-  if (import.meta.env.DEV) {
-    return '/health';
-  }
-  
-  // В production без URL - не проверяем бэкенд
-  return null;
-};
-
-// Вспомогательные функции
+// Вспомогательные функции - точно как у друга
 const checkBackendAvailability = async (): Promise<boolean> => {
   if (isBackendAvailable !== null) return isBackendAvailable;
   
-  // Если мы в production на GitHub Pages без VITE_API_URL, сразу используем моки
-  if (isProductionOnGitHubPages()) {
-    console.log('Production на GitHub Pages без VITE_API_URL, используем моковые данные');
-    isBackendAvailable = false;
-    return false;
-  }
-  
-  const healthUrl = getHealthUrl();
-  
-  // Если нет URL для проверки, используем моки
-  if (healthUrl === null) {
-    console.log('VITE_API_URL не задана, используем моковые данные');
-    isBackendAvailable = false;
-    return false;
-  }
-  
   try {
     // Используем GET вместо HEAD (более надёжно)
-    const response = await fetch(healthUrl, {
+    const response = await fetch('/health', {
       method: 'GET',
       signal: AbortSignal.timeout(3000)
     });
     isBackendAvailable = response.ok;
     console.log(`Бэкенд ${isBackendAvailable ? 'доступен' : 'недоступен'}`);
   } catch (error) {
-    // Не логируем ошибку как warning, если это ожидаемое поведение
-    if (!isProductionOnGitHubPages()) {
-      console.warn('Бэкенд недоступен, используем моковые данные', error);
-    }
+    console.warn('Бэкенд недоступен, используем моковые данные', error);
     isBackendAvailable = false;
   }
   
@@ -182,31 +98,6 @@ export const getLoads = async (
       });
     }
 
-    return { items: filteredMockItems, total: filteredMockItems.length };
-  }
-
-  // Дополнительная проверка: если мы в production на GitHub Pages без VITE_API_URL,
-  // не делаем запросы (должны были вернуться раньше, но на всякий случай)
-  if (isProductionOnGitHubPages()) {
-    console.log('Дополнительная проверка: используем моковые данные');
-    let filteredMockItems = LOADS_MOCK.items;
-    if (search) {
-      filteredMockItems = filteredMockItems.filter((load) =>
-        load.load_title.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    if (category) {
-      filteredMockItems = filteredMockItems.filter(
-        (load) => load.load_category === category
-      );
-    }
-    if (minNormative !== undefined || maxNormative !== undefined) {
-      filteredMockItems = filteredMockItems.filter((load) => {
-        if (minNormative !== undefined && load.normative < minNormative) return false;
-        if (maxNormative !== undefined && load.normative > maxNormative) return false;
-        return true;
-      });
-    }
     return { items: filteredMockItems, total: filteredMockItems.length };
   }
 
@@ -280,14 +171,6 @@ export const getLoadById = async (id: string): Promise<ILoad | null> => {
     return null;
   }
   
-  // Дополнительная проверка: если мы в production на GitHub Pages без VITE_API_URL
-  if (isProductionOnGitHubPages()) {
-    console.log('Дополнительная проверка: используем моковые данные для getLoadById');
-    const load = LOADS_MOCK.items.find((l) => l.id === parseInt(id));
-    if (load) return load;
-    return null;
-  }
-  
   try {
     const response = await fetchWithTimeout(`${API_PREFIX}/loads/${id}`);
     if (!response.ok) {
@@ -310,12 +193,6 @@ export const getCartBadge = async (): Promise<ICartBadge> => {
   
   if (!backendAvailable) {
     console.log('Бэкенд недоступен, возвращаем пустую корзину');
-    return { load_session_id: null, loads_count: 0 };
-  }
-  
-  // Дополнительная проверка: если мы в production на GitHub Pages без VITE_API_URL
-  if (isProductionOnGitHubPages()) {
-    console.log('Дополнительная проверка: возвращаем пустую корзину');
     return { load_session_id: null, loads_count: 0 };
   }
   
